@@ -1,476 +1,537 @@
-import React, { useState, useRef } from 'react';
-import { Award, Printer, RefreshCw, Star, ChevronRight, ChevronLeft, Upload, Image as ImageIcon, Settings } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>졸업식 미덕 상장 생성기</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM & Babel -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-const VIRTUES_DATA = [
-  { id: 1, name: "감사", desc: "고마운 마음을 표현하고 긍정적인 면을 찾습니다.", praise: "작은 일에도 고마움을 느끼며 주변을 밝게 만드는 태도" },
-  { id: 2, name: "겸손", desc: "자신을 낮추고 다른 사람의 장점을 인정합니다.", praise: "자신의 성취를 뽐내기보다 타인을 돋보이게 하는 성품" },
-  { id: 3, name: "경청", desc: "상대방의 말과 마음에 귀를 기울입니다.", praise: "친구들의 이야기에 귀 기울이며 마음을 여는 따뜻한 자세" },
-  { id: 4, name: "끈기", desc: "시작한 일을 끝까지 해내며 포기하지 않습니다.", praise: "어려움이 닥쳐도 포기하지 않고 끝까지 해내는 강인한 의지" },
-  { id: 5, name: "너그러움", desc: "다른 사람의 실수나 허물을 감싸줍니다.", praise: "친구의 실수를 따뜻하게 감싸주며 기회를 주는 넓은 마음" },
-  { id: 6, name: "노력", desc: "목표를 이루기 위해 몸과 마음을 다해 애씁니다.", praise: "목표를 향해 땀 흘리며 한 걸음씩 나아가는 성실한 모습" },
-  { id: 7, name: "도전", desc: "새로운 일이나 어려운 일에 용기 있게 나섭니다.", praise: "낯설고 힘든 일 앞에서도 주저하지 않고 나아가는 용기" },
-  { id: 8, name: "배려", desc: "나보다 남을 먼저 생각하고 도와줍니다.", praise: "자신보다 친구를 먼저 생각하고 챙겨주는 사려 깊은 마음씨" },
-  { id: 9, name: "봉사", desc: "대가를 바라지 않고 남을 위해 돕습니다.", praise: "대가 없이 공동체를 위해 기꺼이 헌신하는 아름다운 손길" },
-  { id: 10, name: "사랑", desc: "사람과 사물을 아끼고 소중히 여깁니다.", praise: "주변 사람들을 진심으로 아끼고 소중히 여기는 따뜻한 사랑" },
-  { id: 11, name: "성실", desc: "맡은 일에 정성을 다하고 꾸준히 실천합니다.", praise: "자신이 맡은 바를 묵묵히, 그리고 꾸준히 해내는 믿음직함" },
-  { id: 12, name: "소신", desc: "옳다고 믿는 것을 굽히지 않고 지킵니다.", praise: "자신의 올바른 신념을 흔들림 없이 지켜나가는 굳건함" },
-  { id: 13, name: "신뢰", desc: "말과 행동이 일치하여 믿음을 줍니다.", praise: "언제나 약속을 지키며 친구들에게 깊은 믿음을 주는 태도" },
-  { id: 14, name: "예의", desc: "상대방의 입장이 되어 마음을 헤아립니다.", praise: "웃어른과 친구를 대할 때 항상 바르고 공손한 몸가짐" },
-  { id: 15, name: "용기", desc: "두려움을 이겨내고 옳은 일을 실천합니다.", praise: "두려움 앞에서도 물러서지 않고 정의롭게 행동하는 기백" },
-  { id: 16, name: "우정", desc: "친구를 믿고 아끼며 즐겁게 지냅니다.", praise: "친구와 기쁨과 슬픔을 함께 나누며 쌓아가는 깊은 우정" },
-  { id: 17, name: "유머", desc: "재미있는 말과 행동으로 주변을 즐겁게 합니다.", praise: "재치 있는 말과 행동으로 교실에 웃음꽃을 피우는 활력" },
-  { id: 18, name: "이해", desc: "상대방의 입장이 되어 마음을 헤아립니다.", praise: "나와 다른 친구의 생각과 감정도 깊이 공감하고 받아들이는 품" },
-  { id: 19, name: "인내", desc: "힘든 상황이나 화를 잘 참고 견딥니다.", praise: "힘든 순간에도 불평하기보다 묵묵히 기다릴 줄 아는 성숙함" },
-  { id: 20, name: "자신감", desc: "자신의 능력을 믿고 당당하게 행동합니다.", praise: "스스로를 믿고 언제 어디서나 당당하게 표현하는 모습" },
-  { id: 21, name: "자율", desc: "스스로 판단하고 행동하며 결과를 책임집니다.", praise: "누가 시키지 않아도 스스로 할 일을 찾아서 하는 주도성" },
-  { id: 22, name: "절제", desc: "하고 싶은 대로 하지 않고 스스로 조절합니다.", praise: "순간의 유혹을 이겨내고 스스로를 다스릴 줄 아는 조절력" },
-  { id: 23, name: "정직", desc: "거짓이 없고 마음이 바르고 곧습니다.", praise: "어떤 상황에서도 거짓 없이 진실을 말하는 투명한 마음" },
-  { id: 24, name: "존중", desc: "나와 남의 가치를 인정하고 귀하게 대합니다.", praise: "친구 한 명 한 명을 소중한 인격체로 대우하는 고귀한 태도" },
-  { id: 25, name: "책임", desc: "맡은 일을 끝까지 완수하여 믿음을 줍니다.", praise: "자신의 역할에 최선을 다하며 결과를 회피하지 않는 책임감" },
-  { id: 26, name: "친절", desc: "상냥하고 부드러운 말과 행동으로 대합니다.", praise: "다정한 말과 부드러운 미소로 친구들의 마음을 녹이는 친절함" },
-  { id: 27, name: "탁월함", desc: "자신의 최선을 다해 가장 좋은 결과를 만듭니다.", praise: "현재에 안주하지 않고 더 나은 모습을 위해 끊임없이 노력하는 열정" },
-  { id: 28, name: "평온", desc: "마음이 차분하고 평화로운 상태를 유지합니다.", praise: "어수선한 상황에서도 흔들리지 않고 차분함을 유지하는 평정심" },
-  { id: 29, name: "포용", desc: "나와 다른 점을 인정하고 넓은 마음으로 받아들입니다.", praise: "다양한 친구들의 개성을 있는 그대로 인정하고 어우러지는 조화" },
-  { id: 30, name: "한결같음", desc: "처음과 끝이 같고 변함없이 꾸준합니다.", praise: "시간이 지나도 변함없는 모습으로 신뢰를 주는 듬직함" },
-  { id: 31, name: "협동", desc: "마음을 모아 서로 돕고 함께 해냅니다.", praise: "나 혼자가 아닌 '우리'를 생각하며 함께 목표를 이루는 협력" },
-  { id: 32, name: "희망", desc: "좋은 일이 일어날 것이라고 믿고 기대합니다.", praise: "어려운 상황에서도 긍정적인 미래를 꿈꾸며 친구들에게 용기를 주는 빛" },
-];
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
 
-export default function GraduationVirtueAwardV2() {
-  const [step, setStep] = useState('intro'); // intro, assessment, result
-  const [currentPage, setCurrentPage] = useState(0);
-  const [scores, setScores] = useState({}); 
-
-  // --- User Inputs ---
-  const [studentName, setStudentName] = useState('');
-  const [certNumber, setCertNumber] = useState('제 2024 - 1호');
-  const [schoolName, setSchoolName] = useState('OO초등학교장');
-  const [sealImage, setSealImage] = useState(null); // Data URL for uploaded image
-
-  const ITEMS_PER_PAGE = 8;
-  const totalPages = Math.ceil(VIRTUES_DATA.length / ITEMS_PER_PAGE);
-
-  // --- Handlers ---
-  const handleScoreChange = (id, score) => {
-    setScores(prev => ({ ...prev, [id]: score }));
-  };
-
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSealImage(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages - 1) {
-      setCurrentPage(prev => prev + 1);
-      window.scrollTo(0, 0);
-    } else {
-      setStep('result');
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 0) {
-      setCurrentPage(prev => prev - 1);
-      window.scrollTo(0, 0);
-    } else {
-      setStep('intro');
-    }
-  };
-
-  const getTopVirtues = () => {
-    const scoreArray = VIRTUES_DATA.map(v => ({
-      ...v,
-      score: scores[v.id] || 0
-    }));
-    scoreArray.sort((a, b) => b.score - a.score);
-    const top3 = scoreArray.slice(0, 3);
-    if (top3[0].score === 0) return [];
-    return top3;
-  };
-
-  const resetApp = () => {
-    // Keep school info and seal, just reset student data
-    setStudentName('');
-    setScores({});
-    setStep('intro');
-    setCurrentPage(0);
-  };
-
-  const handlePrint = () => {
-    window.print();
-  };
-
-  // Pre-calculate data
-  const currentVirtues = VIRTUES_DATA.slice(
-    currentPage * ITEMS_PER_PAGE,
-    (currentPage + 1) * ITEMS_PER_PAGE
-  );
-
-  const topVirtues = step === 'result' ? getTopVirtues() : [];
-  const today = new Date();
-  const dateString = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
-  const combinedPraise = topVirtues.map(v => v.praise).join(', ');
-  const virtueNames = topVirtues.map(v => v.name).join(', ');
-
-  // SVG Pattern for corners
-  const CornerOrnament = ({ className, style }) => (
-    <svg className={className} style={style} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M10 10 L40 10 C60 10 70 20 70 40 L70 90 M10 10 L10 40 C10 60 20 70 40 70 L90 70" stroke="#C5A059" strokeWidth="3" fill="none" />
-      <path d="M15 15 L35 15 C45 15 50 20 50 35 L50 80 M15 15 L15 35 C15 45 20 50 35 50 L80 50" stroke="#E5C580" strokeWidth="1" fill="none" />
-      <circle cx="15" cy="15" r="4" fill="#C5A059" />
-    </svg>
-  );
-
-  return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
-      <style>{`
-        @media print {
-          .no-print { display: none !important; }
-          .print-area { 
-            box-shadow: none !important; 
-            margin: 0 !important;
-            width: 100% !important;
-            height: 100vh !important;
-            page-break-after: always;
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-          body { background: white; }
-          @page { margin: 0; size: A4 portrait; }
-        }
-        @import url('https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
         .font-serif { font-family: 'Nanum Myeongjo', serif; }
-      `}</style>
-      
-      {/* --- STEP 1: Intro & Configuration --- */}
-      {step === 'intro' && (
-        <div className="flex flex-col items-center justify-center min-h-[80vh] py-12 px-4 animate-fade-in">
-          <div className="text-center space-y-4 mb-8">
-            <Award className="w-20 h-20 mx-auto text-yellow-500" />
-            <h1 className="text-4xl font-bold text-gray-800 tracking-tight">졸업식 미덕 상장 생성기</h1>
-            <p className="text-gray-600">
-              학생 맞춤형 미덕을 찾아 세상에 하나뿐인 상장을 만들어주세요.
-            </p>
-          </div>
+        
+        @media print {
+            .no-print { display: none !important; }
+            .print-area { 
+                box-shadow: none !important; 
+                margin: 0 !important;
+                width: 100% !important;
+                height: 100vh !important;
+                page-break-after: always;
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            body { background: white; }
+            @page { margin: 0; size: A4 portrait; }
+        }
 
-          <div className="w-full max-w-2xl bg-white p-8 rounded-2xl shadow-xl border border-gray-200 flex flex-col gap-8">
-            
-            {/* 1. Student Info */}
-            <div>
-              <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                <Star className="w-5 h-5 mr-2 text-indigo-500" /> 학생 정보
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">학생 이름</label>
-                  <input
-                    type="text"
-                    value={studentName}
-                    onChange={(e) => setStudentName(e.target.value)}
-                    placeholder="예: 김철수"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500"
-                    onKeyDown={(e) => e.key === 'Enter' && studentName && setStep('assessment')}
-                  />
-                </div>
-                <div>
-                   <label className="block text-sm font-medium text-gray-700 mb-1">상장 호수</label>
-                   <input
-                    type="text"
-                    value={certNumber}
-                    onChange={(e) => setCertNumber(e.target.value)}
-                    placeholder="예: 제 2024 - 1호"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-              </div>
-            </div>
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen">
 
-            <hr className="border-gray-100" />
+    <div id="root"></div>
 
-            {/* 2. Certificate Settings */}
-            <div>
-              <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                <Settings className="w-5 h-5 mr-2 text-gray-500" /> 학교 설정
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">학교장 명의</label>
-                  <input
-                    type="text"
-                    value={schoolName}
-                    onChange={(e) => setSchoolName(e.target.value)}
-                    placeholder="예: OO초등학교장"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
+    <script type="text/babel">
+        const { useState, useRef, useEffect } = React;
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">학교 직인 (이미지)</label>
-                  <div className="flex items-center gap-4">
-                    <label className="cursor-pointer flex items-center gap-2 px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors text-gray-700 text-sm">
-                      <Upload className="w-4 h-4" />
-                      {sealImage ? '이미지 변경' : '이미지 업로드'}
-                      <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
-                    </label>
-                    {sealImage && (
-                      <div className="relative w-12 h-12 border border-gray-200 rounded-md overflow-hidden bg-white">
-                        <img src={sealImage} alt="직인 미리보기" className="w-full h-full object-contain" />
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-xs text-gray-400 mt-1">* 배경이 투명한 PNG 파일을 권장합니다.</p>
-                </div>
-              </div>
-            </div>
+        // --- Icons (Inline SVGs) ---
+        const Award = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+        );
+        const Printer = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        );
+        const RefreshCw = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        );
+        const Star = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        );
+        const ChevronRight = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="9 18 15 12 9 6"/></svg>
+        );
+        const ChevronLeft = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="15 18 9 12 15 6"/></svg>
+        );
+        const Upload = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        );
+        const Settings = ({ className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        );
+        const CornerOrnament = ({ className, style }) => (
+            <svg className={className} style={style} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 10 L40 10 C60 10 70 20 70 40 L70 90 M10 10 L10 40 C10 60 20 70 40 70 L90 70" stroke="#C5A059" strokeWidth="3" fill="none" />
+                <path d="M15 15 L35 15 C45 15 50 20 50 35 L50 80 M15 15 L15 35 C15 45 20 50 35 50 L80 50" stroke="#E5C580" strokeWidth="1" fill="none" />
+                <circle cx="15" cy="15" r="4" fill="#C5A059" />
+            </svg>
+        );
 
-            <button
-              onClick={() => setStep('assessment')}
-              disabled={!studentName}
-              className={`mt-4 w-full flex items-center justify-center py-4 px-4 rounded-xl text-white font-bold text-lg transition-all ${
-                studentName ? 'bg-indigo-600 hover:bg-indigo-700 shadow-lg hover:shadow-xl' : 'bg-gray-300 cursor-not-allowed'
-              }`}
-            >
-              미덕 찾기 시작 <ChevronRight className="ml-2 w-5 h-5" />
-            </button>
-          </div>
-        </div>
-      )}
+        const VIRTUES_DATA = [
+            { id: 1, name: "감사", desc: "고마운 마음을 표현하고 긍정적인 면을 찾습니다.", praise: "작은 일에도 고마움을 느끼며 주변을 밝게 만드는 태도" },
+            { id: 2, name: "겸손", desc: "자신을 낮추고 다른 사람의 장점을 인정합니다.", praise: "자신의 성취를 뽐내기보다 타인을 돋보이게 하는 성품" },
+            { id: 3, name: "경청", desc: "상대방의 말과 마음에 귀를 기울입니다.", praise: "친구들의 이야기에 귀 기울이며 마음을 여는 따뜻한 자세" },
+            { id: 4, name: "끈기", desc: "시작한 일을 끝까지 해내며 포기하지 않습니다.", praise: "어려움이 닥쳐도 포기하지 않고 끝까지 해내는 강인한 의지" },
+            { id: 5, name: "너그러움", desc: "다른 사람의 실수나 허물을 감싸줍니다.", praise: "친구의 실수를 따뜻하게 감싸주며 기회를 주는 넓은 마음" },
+            { id: 6, name: "노력", desc: "목표를 이루기 위해 몸과 마음을 다해 애씁니다.", praise: "목표를 향해 땀 흘리며 한 걸음씩 나아가는 성실한 모습" },
+            { id: 7, name: "도전", desc: "새로운 일이나 어려운 일에 용기 있게 나섭니다.", praise: "낯설고 힘든 일 앞에서도 주저하지 않고 나아가는 용기" },
+            { id: 8, name: "배려", desc: "나보다 남을 먼저 생각하고 도와줍니다.", praise: "자신보다 친구를 먼저 생각하고 챙겨주는 사려 깊은 마음씨" },
+            { id: 9, name: "봉사", desc: "대가를 바라지 않고 남을 위해 돕습니다.", praise: "대가 없이 공동체를 위해 기꺼이 헌신하는 아름다운 손길" },
+            { id: 10, name: "사랑", desc: "사람과 사물을 아끼고 소중히 여깁니다.", praise: "주변 사람들을 진심으로 아끼고 소중히 여기는 따뜻한 사랑" },
+            { id: 11, name: "성실", desc: "맡은 일에 정성을 다하고 꾸준히 실천합니다.", praise: "자신이 맡은 바를 묵묵히, 그리고 꾸준히 해내는 믿음직함" },
+            { id: 12, name: "소신", desc: "옳다고 믿는 것을 굽히지 않고 지킵니다.", praise: "자신의 올바른 신념을 흔들림 없이 지켜나가는 굳건함" },
+            { id: 13, name: "신뢰", desc: "말과 행동이 일치하여 믿음을 줍니다.", praise: "언제나 약속을 지키며 친구들에게 깊은 믿음을 주는 태도" },
+            { id: 14, name: "예의", desc: "상대방을 존중하는 마음으로 바르게 행동합니다.", praise: "웃어른과 친구를 대할 때 항상 바르고 공손한 몸가짐" },
+            { id: 15, name: "용기", desc: "두려움을 이겨내고 옳은 일을 실천합니다.", praise: "두려움 앞에서도 물러서지 않고 정의롭게 행동하는 기백" },
+            { id: 16, name: "우정", desc: "친구를 믿고 아끼며 즐겁게 지냅니다.", praise: "친구와 기쁨과 슬픔을 함께 나누며 쌓아가는 깊은 우정" },
+            { id: 17, name: "유머", desc: "재미있는 말과 행동으로 주변을 즐겁게 합니다.", praise: "재치 있는 말과 행동으로 교실에 웃음꽃을 피우는 활력" },
+            { id: 18, name: "이해", desc: "상대방의 입장이 되어 마음을 헤아립니다.", praise: "나와 다른 친구의 생각과 감정도 깊이 공감하고 받아들이는 품" },
+            { id: 19, name: "인내", desc: "힘든 상황이나 화를 잘 참고 견딥니다.", praise: "힘든 순간에도 불평하기보다 묵묵히 기다릴 줄 아는 성숙함" },
+            { id: 20, name: "자신감", desc: "자신의 능력을 믿고 당당하게 행동합니다.", praise: "스스로를 믿고 언제 어디서나 당당하게 표현하는 모습" },
+            { id: 21, name: "자율", desc: "스스로 판단하고 행동하며 결과를 책임집니다.", praise: "누가 시키지 않아도 스스로 할 일을 찾아서 하는 주도성" },
+            { id: 22, name: "절제", desc: "하고 싶은 대로 하지 않고 스스로 조절합니다.", praise: "순간의 유혹을 이겨내고 스스로를 다스릴 줄 아는 조절력" },
+            { id: 23, name: "정직", desc: "거짓이 없고 마음이 바르고 곧습니다.", praise: "어떤 상황에서도 거짓 없이 진실을 말하는 투명한 마음" },
+            { id: 24, name: "존중", desc: "나와 남의 가치를 인정하고 귀하게 대합니다.", praise: "친구 한 명 한 명을 소중한 인격체로 대우하는 고귀한 태도" },
+            { id: 25, name: "책임", desc: "맡은 일을 끝까지 완수하여 믿음을 줍니다.", praise: "자신의 역할에 최선을 다하며 결과를 회피하지 않는 책임감" },
+            { id: 26, name: "친절", desc: "상냥하고 부드러운 말과 행동으로 대합니다.", praise: "다정한 말과 부드러운 미소로 친구들의 마음을 녹이는 친절함" },
+            { id: 27, name: "탁월함", desc: "자신의 최선을 다해 가장 좋은 결과를 만듭니다.", praise: "현재에 안주하지 않고 더 나은 모습을 위해 끊임없이 노력하는 열정" },
+            { id: 28, name: "평온", desc: "마음이 차분하고 평화로운 상태를 유지합니다.", praise: "어수선한 상황에서도 흔들리지 않고 차분함을 유지하는 평정심" },
+            { id: 29, name: "포용", desc: "나와 다른 점을 인정하고 넓은 마음으로 받아들입니다.", praise: "다양한 친구들의 개성을 있는 그대로 인정하고 어우러지는 조화" },
+            { id: 30, name: "한결같음", desc: "처음과 끝이 같고 변함없이 꾸준합니다.", praise: "시간이 지나도 변함없는 모습으로 신뢰를 주는 듬직함" },
+            { id: 31, name: "협동", desc: "마음을 모아 서로 돕고 함께 해냅니다.", praise: "나 혼자가 아닌 '우리'를 생각하며 함께 목표를 이루는 협력" },
+            { id: 32, name: "희망", desc: "좋은 일이 일어날 것이라고 믿고 기대합니다.", praise: "어려운 상황에서도 긍정적인 미래를 꿈꾸며 친구들에게 용기를 주는 빛" },
+        ];
 
-      {/* --- STEP 2: Assessment --- */}
-      {step === 'assessment' && (
-        <div className="max-w-4xl mx-auto pb-24 p-4">
-           {/* Header */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 sticky top-0 z-10 bg-opacity-95 backdrop-blur">
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-800">{studentName} 학생의 미덕 찾기</h2>
-                <p className="text-sm text-gray-500">평소 학교생활을 떠올리며 해당되는 정도를 선택해주세요.</p>
-              </div>
-              <div className="text-right">
-                <span className="text-indigo-600 font-bold text-xl">{currentPage + 1}</span>
-                <span className="text-gray-400"> / {totalPages}</span>
-              </div>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2.5">
-              <div 
-                className="bg-indigo-600 h-2.5 rounded-full transition-all duration-300" 
-                style={{ width: `${((currentPage + 1) / totalPages) * 100}%` }}
-              ></div>
-            </div>
-          </div>
+        function App() {
+            const [step, setStep] = useState('intro'); // intro, assessment, result
+            const [currentPage, setCurrentPage] = useState(0);
+            const [scores, setScores] = useState({}); 
 
-          {/* List */}
-          <div className="grid gap-6">
-            {currentVirtues.map((virtue) => (
-              <div key={virtue.id} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="bg-indigo-100 text-indigo-800 text-xs font-bold px-2.5 py-0.5 rounded border border-indigo-200">
-                        {virtue.name}
-                      </span>
-                    </div>
-                    <h3 className="text-lg font-medium text-gray-800">{virtue.desc}</h3>
-                  </div>
-                  
-                  <div className="flex items-center gap-1 md:gap-3 bg-gray-50 p-2 rounded-lg justify-center">
-                    {[1, 2, 3, 4, 5].map((val) => (
-                      <button
-                        key={val}
-                        onClick={() => handleScoreChange(virtue.id, val)}
-                        className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all transform hover:scale-110 ${
-                          scores[virtue.id] === val
-                            ? 'bg-indigo-600 text-white shadow-lg ring-2 ring-indigo-300 ring-offset-2'
-                            : 'bg-white text-gray-400 border border-gray-200 hover:border-indigo-300 hover:text-indigo-500'
-                        }`}
-                      >
-                        {val}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+            // --- User Inputs ---
+            const [studentName, setStudentName] = useState('');
+            const [certNumber, setCertNumber] = useState('제 2024 - 1호');
+            const [schoolName, setSchoolName] = useState('OO초등학교장');
+            const [sealImage, setSealImage] = useState(null); // Data URL for uploaded image
 
-          {/* Nav */}
-          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
-            <div className="max-w-4xl mx-auto flex justify-between">
-              <button
-                onClick={handlePrevPage}
-                className="flex items-center px-6 py-3 rounded-lg text-gray-600 hover:bg-gray-100 font-medium transition-colors"
-              >
-                <ChevronLeft className="mr-2 w-5 h-5" />
-                {currentPage === 0 ? '설정으로' : '이전'}
-              </button>
-              
-              <button
-                onClick={handleNextPage}
-                className="flex items-center px-8 py-3 rounded-lg bg-indigo-600 text-white font-bold hover:bg-indigo-700 shadow-lg transition-transform transform hover:-translate-y-1"
-              >
-                {currentPage === totalPages - 1 ? '상장 만들기' : '다음'}
-                {currentPage === totalPages - 1 ? <Award className="ml-2 w-5 h-5" /> : <ChevronRight className="ml-2 w-5 h-5" />}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            const ITEMS_PER_PAGE = 8;
+            const totalPages = Math.ceil(VIRTUES_DATA.length / ITEMS_PER_PAGE);
 
-      {/* --- STEP 3: Result & Print --- */}
-      {step === 'result' && (
-        topVirtues.length === 0 ? (
-          <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
-            <p className="text-xl text-gray-600">선택된 미덕 점수가 없습니다.</p>
-            <button onClick={() => setStep('assessment')} className="text-indigo-600 underline">다시 평가하기</button>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center min-h-screen bg-gray-100 py-8 px-4">
-            
-            {/* Controls */}
-            <div className="w-full max-w-4xl flex justify-between items-center mb-8 no-print">
-              <button
-                onClick={resetApp}
-                className="flex items-center text-gray-600 hover:text-gray-900 bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-200"
-              >
-                <RefreshCw className="w-4 h-4 mr-2" /> 다른 학생 만들기
-              </button>
-              <div className="flex gap-2">
-                <div className="bg-yellow-100 text-yellow-800 px-3 py-2 rounded text-sm flex items-center">
-                  <span className="font-bold mr-1">Tip:</span> PDF 저장은 인쇄 메뉴에서 'PDF로 저장' 선택
-                </div>
-                <button
-                  onClick={handlePrint}
-                  className="flex items-center bg-blue-600 text-white px-6 py-2 rounded-lg font-bold shadow-md hover:bg-blue-700 transition-colors"
-                >
-                  <Printer className="w-5 h-5 mr-2" /> 상장 인쇄 / PDF 저장
-                </button>
-              </div>
-            </div>
+            // --- Handlers ---
+            const handleScoreChange = (id, score) => {
+                setScores(prev => ({ ...prev, [id]: score }));
+            };
 
-            {/* Certificate Preview Area (High Quality Design) */}
-            <div className="bg-[#fffdf5] p-0 shadow-2xl overflow-hidden max-w-[210mm] w-full aspect-[1/1.414] relative print-area text-gray-900">
-              
-              {/* --- Decorative Frame --- */}
-              <div className="absolute inset-4 border-[4px] border-[#C5A059] pointer-events-none z-10 flex flex-col justify-between p-1">
-                 {/* Inner thin line */}
-                 <div className="w-full h-full border border-[#C5A059]"></div>
-              </div>
+            const handleImageUpload = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        setSealImage(reader.result);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
 
-              {/* Corner Ornaments */}
-              <div className="absolute inset-0 pointer-events-none z-20">
-                <CornerOrnament className="absolute top-4 left-4 w-24 h-24" />
-                <CornerOrnament className="absolute top-4 right-4 w-24 h-24 transform scale-x-[-1]" />
-                <CornerOrnament className="absolute bottom-4 left-4 w-24 h-24 transform scale-y-[-1]" />
-                <CornerOrnament className="absolute bottom-4 right-4 w-24 h-24 transform scale-[-1]" />
-              </div>
+            const handleNextPage = () => {
+                if (currentPage < totalPages - 1) {
+                    setCurrentPage(prev => prev + 1);
+                    window.scrollTo(0, 0);
+                } else {
+                    setStep('result');
+                }
+            };
 
-              {/* Watermark */}
-              <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none">
-                <Award className="w-96 h-96" />
-              </div>
+            const handlePrevPage = () => {
+                if (currentPage > 0) {
+                    setCurrentPage(prev => prev - 1);
+                    window.scrollTo(0, 0);
+                } else {
+                    setStep('intro');
+                }
+            };
 
-              {/* --- Content --- */}
-              <div className="relative z-30 h-full flex flex-col items-center justify-between py-24 px-20 text-center">
+            const getTopVirtues = () => {
+                const scoreArray = VIRTUES_DATA.map(v => ({
+                    ...v,
+                    score: scores[v.id] || 0
+                }));
+                scoreArray.sort((a, b) => b.score - a.score);
+                const top3 = scoreArray.slice(0, 3);
+                if (top3[0].score === 0) return [];
+                return top3;
+            };
+
+            const resetApp = () => {
+                setStudentName('');
+                setScores({});
+                setStep('intro');
+                setCurrentPage(0);
+            };
+
+            const handlePrint = () => {
+                window.print();
+            };
+
+            // Pre-calculate data
+            const currentVirtues = VIRTUES_DATA.slice(
+                currentPage * ITEMS_PER_PAGE,
+                (currentPage + 1) * ITEMS_PER_PAGE
+            );
+
+            const topVirtues = step === 'result' ? getTopVirtues() : [];
+            const today = new Date();
+            const dateString = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
+            const combinedPraise = topVirtues.map(v => v.praise).join(', ');
+            const virtueNames = topVirtues.map(v => v.name).join(', ');
+
+            return (
+                <div className="font-sans">
                 
-                {/* Header Section */}
-                <div className="w-full space-y-6">
-                  <div className="text-left text-lg font-serif text-gray-600 mb-8 pl-4">
-                    {certNumber}
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <h1 className="text-6xl font-black font-serif tracking-[0.2em] mb-2 text-[#1a1a1a] drop-shadow-sm">상 장</h1>
-                    <div className="flex items-center justify-center gap-4">
-                       <div className="h-[1px] w-12 bg-[#C5A059]"></div>
-                       <div className="text-3xl font-bold text-[#b08d55] font-serif tracking-widest">{virtueNames} 상</div>
-                       <div className="h-[1px] w-12 bg-[#C5A059]"></div>
+                {/* --- STEP 1: Intro & Configuration --- */}
+                {step === 'intro' && (
+                    <div className="flex flex-col items-center justify-center min-h-[80vh] py-12 px-4 animate-fade-in">
+                    <div className="text-center space-y-4 mb-8">
+                        <Award className="w-20 h-20 mx-auto text-yellow-500" />
+                        <h1 className="text-4xl font-bold text-gray-800 tracking-tight">졸업식 미덕 상장 생성기</h1>
+                        <p className="text-gray-600">
+                        학생 맞춤형 미덕을 찾아 세상에 하나뿐인 상장을 만들어주세요.
+                        </p>
                     </div>
-                  </div>
-                </div>
 
-                {/* Name Section */}
-                <div className="w-full text-left pl-8 my-10 flex items-end gap-6">
-                   <span className="text-2xl font-serif font-bold text-gray-700 w-24">성 명 :</span>
-                   <span className="text-4xl font-serif font-bold border-b border-gray-400 px-8 pb-1 min-w-[240px] text-center">
-                     {studentName}
-                   </span>
-                </div>
+                    <div className="w-full max-w-2xl bg-white p-8 rounded-2xl shadow-xl border border-gray-200 flex flex-col gap-8">
+                        
+                        {/* 1. Student Info */}
+                        <div>
+                        <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                            <Star className="w-5 h-5 mr-2 text-indigo-500" /> 학생 정보
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">학생 이름</label>
+                            <input
+                                type="text"
+                                value={studentName}
+                                onChange={(e) => setStudentName(e.target.value)}
+                                placeholder="예: 김철수"
+                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500"
+                                onKeyDown={(e) => e.key === 'Enter' && studentName && setStep('assessment')}
+                            />
+                            </div>
+                            <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">상장 호수</label>
+                            <input
+                                type="text"
+                                value={certNumber}
+                                onChange={(e) => setCertNumber(e.target.value)}
+                                placeholder="예: 제 2024 - 1호"
+                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500"
+                            />
+                            </div>
+                        </div>
+                        </div>
 
-                {/* Body Text */}
-                <div className="flex-1 w-full px-4">
-                  <p className="text-[22px] leading-[2.2] font-serif text-justify break-keep text-gray-800">
-                    위 학생은 평소 <strong className="text-[#1a4b8c] font-bold text-2xl">[{virtueNames}]</strong>의 미덕이 
-                    남다르게 빛나는 생활을 하였습니다. 특히 {combinedPraise}를 보여주었기에 
-                    초등학교 6년 과정을 마치는 영광스러운 졸업식에서 이 상장을 수여하여 칭찬합니다.
-                  </p>
-                </div>
+                        <hr className="border-gray-100" />
 
-                {/* Footer Section */}
-                <div className="w-full mt-12 mb-8 space-y-16">
-                  <p className="text-2xl font-serif text-gray-600 tracking-widest">
-                    {dateString}
-                  </p>
-                  
-                  <div className="flex flex-col items-center justify-center">
-                    <div className="relative flex items-center gap-8 pl-8">
-                      <span className="text-[34px] font-black font-serif tracking-widest text-[#1a1a1a]">
-                        {schoolName}
-                      </span>
-                      <div className="relative w-24 h-24 flex items-center justify-center">
-                        {sealImage ? (
-                          <img 
-                            src={sealImage} 
-                            alt="직인" 
-                            className="absolute w-24 h-24 object-contain opacity-90 mix-blend-multiply filter contrast-125" 
-                          />
-                        ) : (
-                          /* Fallback Stamp */
-                          <div className="absolute border-4 border-red-600 rounded opacity-80 rotate-3 w-20 h-20 flex items-center justify-center">
-                            <span className="text-red-600 font-bold text-sm transform -rotate-3 whitespace-nowrap">직인생략</span>
-                          </div>
-                        )}
-                      </div>
+                        {/* 2. Certificate Settings */}
+                        <div>
+                        <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                            <Settings className="w-5 h-5 mr-2 text-gray-500" /> 학교 설정
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">학교장 명의</label>
+                            <input
+                                type="text"
+                                value={schoolName}
+                                onChange={(e) => setSchoolName(e.target.value)}
+                                placeholder="예: OO초등학교장"
+                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500"
+                            />
+                            </div>
+
+                            <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">학교 직인 (이미지)</label>
+                            <div className="flex items-center gap-4">
+                                <label className="cursor-pointer flex items-center gap-2 px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors text-gray-700 text-sm">
+                                <Upload className="w-4 h-4" />
+                                {sealImage ? '이미지 변경' : '이미지 업로드'}
+                                <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
+                                </label>
+                                {sealImage && (
+                                <div className="relative w-12 h-12 border border-gray-200 rounded-md overflow-hidden bg-white">
+                                    <img src={sealImage} alt="직인 미리보기" className="w-full h-full object-contain" />
+                                </div>
+                                )}
+                            </div>
+                            <p className="text-xs text-gray-400 mt-1">* 배경이 투명한 PNG 파일을 권장합니다.</p>
+                            </div>
+                        </div>
+                        </div>
+
+                        <button
+                        onClick={() => setStep('assessment')}
+                        disabled={!studentName}
+                        className={`mt-4 w-full flex items-center justify-center py-4 px-4 rounded-xl text-white font-bold text-lg transition-all ${
+                            studentName ? 'bg-indigo-600 hover:bg-indigo-700 shadow-lg hover:shadow-xl' : 'bg-gray-300 cursor-not-allowed'
+                        }`}
+                        >
+                        미덕 찾기 시작 <ChevronRight className="ml-2 w-5 h-5" />
+                        </button>
                     </div>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-            {/* Explainer Card */}
-            <div className="max-w-4xl w-full mt-12 bg-white rounded-xl shadow-lg p-8 no-print border-t-4 border-indigo-500">
-              <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-                <Star className="w-6 h-6 text-yellow-500 mr-2" />
-                {studentName} 학생의 보석 같은 미덕 3가지
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {topVirtues.map((v, idx) => (
-                  <div key={idx} className="bg-indigo-50 rounded-lg p-5 border border-indigo-100">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-lg font-bold text-indigo-700">{v.name}</span>
-                      <div className="bg-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-indigo-600 shadow-sm">
-                        {idx + 1}
-                      </div>
                     </div>
-                    <p className="text-gray-700 text-sm leading-relaxed">{v.praise}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+                )}
 
-          </div>
-        )
-      )}
-    </div>
-  );
-}
+                {/* --- STEP 2: Assessment --- */}
+                {step === 'assessment' && (
+                    <div className="max-w-4xl mx-auto pb-24 p-4">
+                    {/* Header */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 sticky top-0 z-10 bg-opacity-95 backdrop-blur">
+                        <div className="flex justify-between items-center mb-4">
+                        <div>
+                            <h2 className="text-2xl font-bold text-gray-800">{studentName} 학생의 미덕 찾기</h2>
+                            <p className="text-sm text-gray-500">평소 학교생활을 떠올리며 해당되는 정도를 선택해주세요.</p>
+                        </div>
+                        <div className="text-right">
+                            <span className="text-indigo-600 font-bold text-xl">{currentPage + 1}</span>
+                            <span className="text-gray-400"> / {totalPages}</span>
+                        </div>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div 
+                            className="bg-indigo-600 h-2.5 rounded-full transition-all duration-300" 
+                            style={{ width: `${((currentPage + 1) / totalPages) * 100}%` }}
+                        ></div>
+                        </div>
+                    </div>
+
+                    {/* List */}
+                    <div className="grid gap-6">
+                        {currentVirtues.map((virtue) => (
+                        <div key={virtue.id} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                <span className="bg-indigo-100 text-indigo-800 text-xs font-bold px-2.5 py-0.5 rounded border border-indigo-200">
+                                    {virtue.name}
+                                </span>
+                                </div>
+                                <h3 className="text-lg font-medium text-gray-800">{virtue.desc}</h3>
+                            </div>
+                            
+                            <div className="flex items-center gap-1 md:gap-3 bg-gray-50 p-2 rounded-lg justify-center">
+                                {[1, 2, 3, 4, 5].map((val) => (
+                                <button
+                                    key={val}
+                                    onClick={() => handleScoreChange(virtue.id, val)}
+                                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all transform hover:scale-110 ${
+                                    scores[virtue.id] === val
+                                        ? 'bg-indigo-600 text-white shadow-lg ring-2 ring-indigo-300 ring-offset-2'
+                                        : 'bg-white text-gray-400 border border-gray-200 hover:border-indigo-300 hover:text-indigo-500'
+                                    }`}
+                                >
+                                    {val}
+                                </button>
+                                ))}
+                            </div>
+                            </div>
+                        </div>
+                        ))}
+                    </div>
+
+                    {/* Nav */}
+                    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+                        <div className="max-w-4xl mx-auto flex justify-between">
+                        <button
+                            onClick={handlePrevPage}
+                            className="flex items-center px-6 py-3 rounded-lg text-gray-600 hover:bg-gray-100 font-medium transition-colors"
+                        >
+                            <ChevronLeft className="mr-2 w-5 h-5" />
+                            {currentPage === 0 ? '설정으로' : '이전'}
+                        </button>
+                        
+                        <button
+                            onClick={handleNextPage}
+                            className="flex items-center px-8 py-3 rounded-lg bg-indigo-600 text-white font-bold hover:bg-indigo-700 shadow-lg transition-transform transform hover:-translate-y-1"
+                        >
+                            {currentPage === totalPages - 1 ? '상장 만들기' : '다음'}
+                            {currentPage === totalPages - 1 ? <Award className="ml-2 w-5 h-5" /> : <ChevronRight className="ml-2 w-5 h-5" />}
+                        </button>
+                        </div>
+                    </div>
+                    </div>
+                )}
+
+                {/* --- STEP 3: Result & Print --- */}
+                {step === 'result' && (
+                    topVirtues.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
+                        <p className="text-xl text-gray-600">선택된 미덕 점수가 없습니다.</p>
+                        <button onClick={() => setStep('assessment')} className="text-indigo-600 underline">다시 평가하기</button>
+                    </div>
+                    ) : (
+                    <div className="flex flex-col items-center min-h-screen bg-gray-100 py-8 px-4">
+                        
+                        {/* Controls */}
+                        <div className="w-full max-w-4xl flex justify-between items-center mb-8 no-print">
+                        <button
+                            onClick={resetApp}
+                            className="flex items-center text-gray-600 hover:text-gray-900 bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-200"
+                        >
+                            <RefreshCw className="w-4 h-4 mr-2" /> 다른 학생 만들기
+                        </button>
+                        <div className="flex gap-2">
+                            <div className="bg-yellow-100 text-yellow-800 px-3 py-2 rounded text-sm flex items-center">
+                            <span className="font-bold mr-1">Tip:</span> PDF 저장은 인쇄 메뉴에서 'PDF로 저장' 선택
+                            </div>
+                            <button
+                            onClick={handlePrint}
+                            className="flex items-center bg-blue-600 text-white px-6 py-2 rounded-lg font-bold shadow-md hover:bg-blue-700 transition-colors"
+                            >
+                            <Printer className="w-5 h-5 mr-2" /> 상장 인쇄 / PDF 저장
+                            </button>
+                        </div>
+                        </div>
+
+                        {/* Certificate Preview Area (High Quality Design) */}
+                        <div className="bg-[#fffdf5] p-0 shadow-2xl overflow-hidden max-w-[210mm] w-full aspect-[1/1.414] relative print-area text-gray-900">
+                        
+                        {/* --- Decorative Frame --- */}
+                        <div className="absolute inset-4 border-[4px] border-[#C5A059] pointer-events-none z-10 flex flex-col justify-between p-1">
+                            {/* Inner thin line */}
+                            <div className="w-full h-full border border-[#C5A059]"></div>
+                        </div>
+
+                        {/* Corner Ornaments */}
+                        <div className="absolute inset-0 pointer-events-none z-20">
+                            <CornerOrnament className="absolute top-4 left-4 w-24 h-24" />
+                            <CornerOrnament className="absolute top-4 right-4 w-24 h-24 transform scale-x-[-1]" />
+                            <CornerOrnament className="absolute bottom-4 left-4 w-24 h-24 transform scale-y-[-1]" />
+                            <CornerOrnament className="absolute bottom-4 right-4 w-24 h-24 transform scale-[-1]" />
+                        </div>
+
+                        {/* Watermark */}
+                        <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none">
+                            <Award className="w-96 h-96" />
+                        </div>
+
+                        {/* --- Content --- */}
+                        <div className="relative z-30 h-full flex flex-col items-center justify-between py-24 px-20 text-center">
+                            
+                            {/* Header Section */}
+                            <div className="w-full space-y-6">
+                            <div className="text-left text-lg font-serif text-gray-600 mb-8 pl-4">
+                                {certNumber}
+                            </div>
+                            
+                            <div className="space-y-4">
+                                <h1 className="text-6xl font-black font-serif tracking-[0.2em] mb-2 text-[#1a1a1a] drop-shadow-sm">상 장</h1>
+                                <div className="flex items-center justify-center gap-4">
+                                <div className="h-[1px] w-12 bg-[#C5A059]"></div>
+                                <div className="text-3xl font-bold text-[#b08d55] font-serif tracking-widest">{virtueNames} 상</div>
+                                <div className="h-[1px] w-12 bg-[#C5A059]"></div>
+                                </div>
+                            </div>
+                            </div>
+
+                            {/* Name Section */}
+                            <div className="w-full text-left pl-8 my-10 flex items-end gap-6">
+                            <span className="text-2xl font-serif font-bold text-gray-700 w-24">성 명 :</span>
+                            <span className="text-4xl font-serif font-bold border-b border-gray-400 px-8 pb-1 min-w-[240px] text-center">
+                                {studentName}
+                            </span>
+                            </div>
+
+                            {/* Body Text */}
+                            <div className="flex-1 w-full px-4">
+                            <p className="text-[22px] leading-[2.2] font-serif text-justify break-keep text-gray-800">
+                                위 학생은 평소 <strong className="text-[#1a4b8c] font-bold text-2xl">[{virtueNames}]</strong>의 미덕이 
+                                남다르게 빛나는 생활을 하였습니다. 특히 {combinedPraise}를 보여주었기에 
+                                초등학교 6년 과정을 마치는 영광스러운 졸업식에서 이 상장을 수여하여 칭찬합니다.
+                            </p>
+                            </div>
+
+                            {/* Footer Section */}
+                            <div className="w-full mt-12 mb-8 space-y-16">
+                            <p className="text-2xl font-serif text-gray-600 tracking-widest">
+                                {dateString}
+                            </p>
+                            
+                            <div className="flex flex-col items-center justify-center">
+                                <div className="relative flex items-center gap-8 pl-8">
+                                <span className="text-[34px] font-black font-serif tracking-widest text-[#1a1a1a]">
+                                    {schoolName}
+                                </span>
+                                <div className="relative w-24 h-24 flex items-center justify-center">
+                                    {sealImage ? (
+                                    <img 
+                                        src={sealImage} 
+                                        alt="직인" 
+                                        className="absolute w-24 h-24 object-contain opacity-90 mix-blend-multiply filter contrast-125" 
+                                    />
+                                    ) : (
+                                    /* Fallback Stamp */
+                                    <div className="absolute border-4 border-red-600 rounded opacity-80 rotate-3 w-20 h-20 flex items-center justify-center">
+                                        <span className="text-red-600 font-bold text-sm transform -rotate-3 whitespace-nowrap">직인생략</span>
+                                    </div>
+                                    )}
+                                </div>
+                                </div>
+                            </div>
+                            </div>
+
+                        </div>
+                        </div>
+
+                        {/* Explainer Card */}
+                        <div className="max-w-4xl w-full mt-12 bg-white rounded-xl shadow-lg p-8 no-print border-t-4 border-indigo-500">
+                        <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                            <Star className="w-6 h-6 text-yellow-500 mr-2" />
+                            {studentName} 학생의 보석 같은 미덕 3가지
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {topVirtues.map((v, idx) => (
+                            <div key={idx} className="bg-indigo-50 rounded-lg p-5 border border-indigo-100">
+                                <div className="flex items-center justify-between mb-3">
+                                <span className="text-lg font-bold text-indigo-700">{v.name}</span>
+                                <div className="bg-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-indigo-600 shadow-sm">
+                                    {idx + 1}
+                                </div>
+                                </div>
+                                <p className="text-gray-700 text-sm leading-relaxed">{v.praise}</p>
+                            </div>
+                            ))}
+                        </div>
+                        </div>
+
+                    </div>
+                    )
+                )}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
